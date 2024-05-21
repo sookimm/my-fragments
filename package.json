@@ -11,5 +11,8 @@
     "url": "https://github.com/sookimm/fragments.git"
   },
   "author": "Sooyeon Kim",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.2.5"
+  }
 }
