@@ -6,34 +6,55 @@ const { createErrorResponse, createSuccessResponse } = require('../../src/respon
 describe('API Responses', () => {
   // Write a test for calling createErrorResponse()
   test('createErrorResponse()', () => {
-    const errorResponse = createErrorResponse(404, 'not found');
-    // Expect the result to look like the following
-    expect(errorResponse).toEqual({
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const status = 404;
+    const message = 'not found';
+
+    createErrorResponse(res, message, status);
+
+    // Expect the response to look like the following
+    expect(res.status).toHaveBeenCalledWith(status);
+    expect(res.json).toHaveBeenCalledWith({
       status: 'error',
       error: {
-        code: 404,
-        message: 'not found',
+        code: status,
+        message,
       },
     });
   });
 
   // Write a test for calling createSuccessResponse() with no argument
   test('createSuccessResponse()', () => {
-    // No arg passed
-    const successResponse = createSuccessResponse();
-    // Expect the result to look like the following
-    expect(successResponse).toEqual({
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    createSuccessResponse(res);
+
+    // Expect the response to look like the following
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
       status: 'ok',
     });
   });
 
   // Write a test for calling createSuccessResponse() with an argument
   test('createSuccessResponse(data)', () => {
-    // Data argument included
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
     const data = { a: 1, b: 2 };
-    const successResponse = createSuccessResponse(data);
-    // Expect the result to look like the following
-    expect(successResponse).toEqual({
+
+    createSuccessResponse(res, data);
+
+    // Expect the response to look like the following
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
       status: 'ok',
       a: 1,
       b: 2,

@@ -1,68 +1,25 @@
 // src/response.js
 
-/**
- * A successful response looks like:
- *
- * {
- *   "status": "ok",
- *   ...
- * }
- */
-module.exports.createSuccessResponse = function (data) {
-  return {
+// Function to create a success response
+const createSuccessResponse = (res, data = {}) => {
+  res.status(200).json({
     status: 'ok',
-    // Use the spread operator to clone `data` into our object, see:
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#spread_in_object_literals
     ...data,
-  };
+  });
 };
 
-/**
- * An error response looks like:
- *
- * {
- *   "status": "error",
- *   "error": {
- *     "code": 400,
- *     "message": "invalid request, missing ...",
- *   }
- * }
- */
-module.exports.createErrorResponse = function (code, message) {
-  return {
+// Function to create an error response
+const createErrorResponse = (res, message, code = 500) => {
+  res.status(code).json({
     status: 'error',
     error: {
-      code: code,
-      message: message,
+      message,
+      code,
     },
-  };
+  });
 };
 
-// src/response.js
-
-/**
- * A successful response looks like:
- *
- * {
- *   "status": "ok",
- *   ...
- * }
- */
-module.exports.createSuccessResponse = function (data) {
-  return {
-    status: 'ok',
-    ...data,
-  };
+module.exports = {
+  createSuccessResponse,
+  createErrorResponse,
 };
-
-/**
- * An error response looks like:
- *
- * {
- *   "status": "error",
- *   "error": {
- *     "code": 400,
- *     "message": "invalid request, missing ...",
- *   }
- * }
- */
