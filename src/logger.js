@@ -14,6 +14,11 @@ if (options.level === 'debug') {
   };
 }
 
+// For test environment, reduce log verbosity
+if (process.env.NODE_ENV === 'test') {
+  options.level = 'silent'; // Change this to 'error' or 'warn' if you still want some logs
+}
+
 // Create and export a Pino Logger instance:
 // https://getpino.io/#/docs/api?id=logger
 module.exports = require('pino')(options);
