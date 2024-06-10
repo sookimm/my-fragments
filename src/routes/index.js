@@ -29,7 +29,7 @@ router.get('/', (req, res) => {
   // Send a 200 'OK' response
   createSuccessResponse(res, {
     author,
-    // Use your own GitHub URL for this!
+    // GitHub URL
     githubUrl: 'https://github.com/sookimm/fragments',
     version,
   });

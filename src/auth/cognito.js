@@ -27,7 +27,6 @@ const jwtVerifier = CognitoJwtVerifier.create({
   tokenUse: 'id',
 });
 
-// Later we'll use other auth configurations, so it's important to log what's happening
 logger.info('Configured to use AWS Cognito for Authorization');
 
 // At startup, download and cache the public keys (JWKS) we need in order to
