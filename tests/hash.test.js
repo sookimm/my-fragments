@@ -1,0 +1,1 @@
+// tests/hash.test.js
