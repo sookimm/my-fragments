@@ -1,11 +1,5 @@
 // tests/unit/fragment.test.js
 
-const {
-  readFragment,
-  writeFragment,
-  readFragmentData,
-  writeFragmentData,
-} = require('../../src/model/data/memory/memory-db');
 const Fragment = require('../../src/model/fragment');
 
 describe('Fragment', () => {
