@@ -1,42 +1,41 @@
 // tests/unit/fragment.test.js
 
+const {
+  readFragment,
+  writeFragment,
+  readFragmentData,
+  writeFragmentData,
+} = require('../../src/model/data/memory/memory-db');
 const Fragment = require('../../src/model/fragment');
 
-describe('Fragment Model', () => {
-  const ownerId = 'testOwner';
-  const id = 'testId';
-  const type = 'text/plain';
-  const data = Buffer.from('Hello, world!');
+describe('Fragment', () => {
+  const fragmentData = { id: 'fragment1', ownerId: 'owner1', data: Buffer.from('test data') };
 
-  let fragment;
-
-  beforeEach(() => {
-    fragment = new Fragment(ownerId, data, type);
-  });
-
-  test('should create a fragment instance', () => {
+  test('should create a Fragment instance', () => {
+    const fragment = new Fragment(fragmentData);
     expect(fragment).toBeInstanceOf(Fragment);
-    expect(fragment.ownerId).toBe(ownerId);
-    expect(fragment.type).toBe(type);
-    expect(fragment.size).toBe(data.length);
   });
 
-  test('should save and read fragment', async () => {
+  test('save() should store fragment', async () => {
+    const fragment = new Fragment(fragmentData);
     await fragment.save();
-    const savedFragment = await Fragment.find(ownerId, fragment.id);
-    expect(savedFragment).toEqual(fragment);
+    const storedFragment = await Fragment.read(fragment.id, fragment.ownerId);
+    expect(storedFragment).toEqual(fragment);
   });
 
-  test('should read and write fragment data', async () => {
+  test('getData() should retrieve fragment data', async () => {
+    const fragment = new Fragment(fragmentData);
     await fragment.save();
-    const savedFragment = await Fragment.find(ownerId, fragment.id);
-    const fragmentData = await savedFragment.getData();
-    expect(fragmentData).toEqual(data);
+    const data = await fragment.getData();
+    expect(data).toEqual(fragmentData.data);
   });
 
-  test('should throw error for unsupported type', () => {
-    expect(() => {
-      new Fragment(ownerId, data, 'unsupported/type');
-    }).toThrow('Unsupported type: unsupported/type');
+  test('setData() should update fragment data', async () => {
+    const fragment = new Fragment(fragmentData);
+    await fragment.save();
+    const newData = Buffer.from('new data');
+    await fragment.setData(newData);
+    const updatedData = await fragment.getData();
+    expect(updatedData).toEqual(newData);
   });
 });

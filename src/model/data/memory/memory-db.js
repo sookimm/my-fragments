@@ -1,29 +1,32 @@
 // src/model/data/memory/memory-db.js
 
-class MemoryDB {
-  constructor() {
-    this.fragments = new Map();
-  }
+const fragments = {};
 
-  async writeFragment(ownerId, id, fragment) {
-    const key = `${ownerId}-${id}`;
-    this.fragments.set(key, fragment);
-  }
+const readFragment = async (ownerId, id) => {
+  return fragments[`${ownerId}/${id}`] || null;
+};
 
-  async readFragment(ownerId, id) {
-    const key = `${ownerId}-${id}`;
-    return this.fragments.get(key);
-  }
+const writeFragment = async (ownerId, fragment) => {
+  fragments[`${ownerId}/${fragment.id}`] = { ...fragment };
+  return fragment;
+};
 
-  async writeFragmentData(ownerId, id, data) {
-    const key = `${ownerId}-${id}-data`;
-    this.fragments.set(key, data);
-  }
+const readFragmentData = async (ownerId, id) => {
+  const fragment = await readFragment(ownerId, id);
+  return fragment ? fragment.data : null;
+};
 
-  async readFragmentData(ownerId, id) {
-    const key = `${ownerId}-${id}-data`;
-    return this.fragments.get(key);
+const writeFragmentData = async (ownerId, id, data) => {
+  const fragment = await readFragment(ownerId, id);
+  if (fragment) {
+    fragment.data = data;
+    await writeFragment(ownerId, fragment);
   }
-}
+};
 
-module.exports = new MemoryDB();
+module.exports = {
+  readFragment,
+  writeFragment,
+  readFragmentData,
+  writeFragmentData,
+};
