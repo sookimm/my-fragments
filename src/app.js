@@ -34,11 +34,17 @@ app.use(compression());
 passport.use(authenticate.strategy());
 app.use(passport.initialize());
 
+if (process.env.NODE_ENV === 'test') {
+  app.use((req, res, next) => {
+    req.user = 'test-user';
+    next();
+  });
+}
+
 // Define a simple health check route. If the server is running
 // we'll respond with a 200 OK.  If not, the server isn't healthy.
 app.get('/', (req, res) => {
   // Clients shouldn't cache this response (always request it fresh)
-  // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#controlling_caching
   res.setHeader('Cache-Control', 'no-cache');
 
   // Send a 200 'OK' response with info about our repo

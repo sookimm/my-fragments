@@ -22,7 +22,7 @@ describe('POST /v1/fragments', () => {
   test('should create a plain text fragment', async () => {
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user', 'password') // Added authentication header
+      .auth('user', 'password')
       .set('Content-Type', 'text/plain')
       .send('plain text data');
 
@@ -34,7 +34,7 @@ describe('POST /v1/fragments', () => {
   test('should return 400 for unsupported content type', async () => {
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user', 'password') // Added authentication header
+      .auth('user', 'password')
       .set('Content-Type', 'application/octet-stream')
       .send(Buffer.from('binary data'));
 

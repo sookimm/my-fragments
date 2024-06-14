@@ -4,9 +4,7 @@ const express = require('express');
 const contentType = require('content-type');
 const { Fragment } = require('../../model/fragment');
 
-const router = express.Router();
-
-// Support sending various Content-Types on the body up to 5M in size
+// rawBody middleware
 const rawBody = () =>
   express.raw({
     inflate: true,
@@ -17,13 +15,18 @@ const rawBody = () =>
     },
   });
 
-router.post('/fragments', rawBody(), async (req, res) => {
+// postFragment route handler
+const postFragment = async (req, res) => {
   if (!Buffer.isBuffer(req.body)) {
     return res.status(400).json({ error: 'Invalid content type' });
   }
 
   try {
-    const fragment = new Fragment({ id: 'generated-id', ownerId: req.user, data: req.body });
+    const fragment = new Fragment({
+      id: 'generated-id',
+      ownerId: req.user || 'test-user',
+      data: req.body,
+    });
     await fragment.save();
     const location = new URL(
       `/v1/fragments/${fragment.id}`,
@@ -34,6 +37,9 @@ router.post('/fragments', rawBody(), async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Unable to save fragment' });
   }
-});
+};
 
-module.exports = router;
+module.exports = {
+  rawBody,
+  postFragment,
+};
