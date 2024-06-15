@@ -1,14 +1,16 @@
 // src/auth/auth-middleware.js
 
-const { hashEmail } = require('../hash');
+// src/auth/auth-middleware.js
 
-function authorize(strategy) {
-  return (req, res, next) => {
-    if (req.user) {
-      req.user = hashEmail(req.user);
+const authorize = (type) => (req, res, next) => {
+  passport.authenticate(type, { session: false }, (err, user) => {
+    if (err || !user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
+    req.user = user;
     next();
-  };
-}
+  })(req, res, next);
+};
 
 module.exports = authorize;
