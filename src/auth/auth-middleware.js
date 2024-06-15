@@ -1,6 +1,6 @@
 // src/auth/auth-middleware.js
 
-// src/auth/auth-middleware.js
+const passport = require('passport');
 
 const authorize = (type) => (req, res, next) => {
   passport.authenticate(type, { session: false }, (err, user) => {
