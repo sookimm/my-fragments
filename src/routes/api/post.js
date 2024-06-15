@@ -35,7 +35,8 @@ const postFragment = async (req, res) => {
     res.setHeader('Location', location.toString());
     res.status(201).json({ fragment });
   } catch (err) {
-    res.status(500).json({ error: 'Unable to save fragment' });
+    console.error('Error in postFragment:', err); // debug log
+    res.status(500).json({ error: 'Unable to save fragment', details: err.message });
   }
 };
 
