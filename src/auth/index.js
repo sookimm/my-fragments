@@ -1,14 +1,14 @@
 // src/auth/index.js
 
-// Prefer Amazon Cognito
+const logger = require('../logger');
+
 if (process.env.AWS_COGNITO_POOL_ID && process.env.AWS_COGNITO_CLIENT_ID) {
+  logger.info('Using Cognito authentication');
   module.exports = require('./cognito');
-}
-// Also allow for an .htpasswd file to be used, but not in production
-else if (process.env.HTPASSWD_FILE && process.NODE_ENV !== 'production') {
+} else if (process.env.HTPASSWD_FILE && process.NODE_ENV !== 'production') {
+  logger.info('Using Basic Auth authentication');
   module.exports = require('./basic-auth');
-}
-// In all other cases, we need to stop now and fix our config
-else {
+} else {
+  logger.error('missing env vars: no authorization configuration found');
   throw new Error('missing env vars: no authorization configuration found');
 }

@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { rawBody, postFragment } = require('./post');
+const logger = require('../../logger');
 
 // Create a router on which to mount our API endpoints
 const router = express.Router();
@@ -9,5 +10,7 @@ const router = express.Router();
 // Define our routes
 router.get('/fragments', require('./get'));
 router.post('/fragments', rawBody(), postFragment);
+
+logger.info('API routes set up');
 
 module.exports = router;

@@ -3,6 +3,7 @@
 const express = require('express');
 const contentType = require('content-type');
 const { Fragment } = require('../../model/fragment');
+const logger = require('../../logger');
 
 // rawBody middleware
 const rawBody = () =>
@@ -11,13 +12,16 @@ const rawBody = () =>
     limit: '5mb',
     type: (req) => {
       const { type } = contentType.parse(req);
-      return Fragment.isSupportedType(type);
+      const supported = Fragment.isSupportedType(type);
+      logger.debug('Parsing request content type', { type, supported });
+      return supported;
     },
   });
 
 // postFragment route handler
 const postFragment = async (req, res) => {
   if (!Buffer.isBuffer(req.body)) {
+    logger.warn('Invalid content type');
     return res.status(400).json({ error: 'Invalid content type' });
   }
 
@@ -33,9 +37,10 @@ const postFragment = async (req, res) => {
       process.env.API_URL || `http://${req.headers.host}`
     );
     res.setHeader('Location', location.toString());
+    logger.info('Fragment created', { id: fragment.id, ownerId: fragment.ownerId });
     res.status(201).json({ fragment });
   } catch (err) {
-    console.error('Error in postFragment:', err); // debug log
+    logger.error('Unable to save fragment', { error: err.message });
     res.status(500).json({ error: 'Unable to save fragment', details: err.message });
   }
 };

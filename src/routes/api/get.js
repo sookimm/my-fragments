@@ -1,7 +1,9 @@
 // src/routes/api/get.js
 
-// Get a list of fragments for the current user
+const logger = require('../../logger');
+
 module.exports = (req, res) => {
+  logger.info('Fetching fragments for user', { user: req.user });
   res.status(200).json({
     status: 'ok',
     fragments: [],

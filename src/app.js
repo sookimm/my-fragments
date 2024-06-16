@@ -54,6 +54,7 @@ app.get('/', (req, res) => {
     githubUrl: 'https://github.com/sookimm/fragments.git',
     version, // Use version variable here
   });
+  logger.info('Health check route accessed');
 });
 
 // Define our routes
@@ -61,6 +62,7 @@ app.use('/', require('./routes'));
 
 // Add 404 middleware to handle any requests for resources that can't be found
 app.use((req, res) => {
+  logger.warn('404 Not Found', { url: req.originalUrl });
   res.status(404).json({
     status: 'error',
     error: {

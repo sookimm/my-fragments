@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { createSuccessResponse } = require('../response');
+const logger = require('../logger');
 
 // version and author from package.json
 const { version, author } = require('../../package.json');
@@ -11,6 +12,8 @@ const { authenticate } = require('../auth');
 
 // Create a router that we can use to mount our API
 const router = express.Router();
+
+logger.info('Setting up routes');
 
 /**
  * Expose all of our API routes on /v1/* to include an API version.
@@ -33,6 +36,7 @@ router.get('/', (req, res) => {
     githubUrl: 'https://github.com/sookimm/fragments',
     version,
   });
+  logger.info('Health check route accessed');
 });
 
 module.exports = router;
