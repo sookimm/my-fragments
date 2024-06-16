@@ -1,12 +1,12 @@
 // src/server.js
 
-// We want to gracefully shutdown our server
+// shutdown our server
 const stoppable = require('stoppable');
 
-// Get our logger instance
+// Get logger instance
 const logger = require('./logger');
 
-// Get our express app instance
+// Get express app instance
 const app = require('./app');
 
 // Get the desired port from the process' environment. Default to `8080`

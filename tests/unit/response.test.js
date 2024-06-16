@@ -2,9 +2,9 @@
 
 const { createErrorResponse, createSuccessResponse } = require('../../src/response');
 
-// Define (i.e., name) the set of tests we're about to do
+// The set of tests we're about to do
 describe('API Responses', () => {
-  // Write a test for calling createErrorResponse()
+  // Test for calling createErrorResponse()
   test('createErrorResponse()', () => {
     const res = {
       status: jest.fn().mockReturnThis(),
@@ -26,7 +26,7 @@ describe('API Responses', () => {
     });
   });
 
-  // Write a test for calling createSuccessResponse() with no argument
+  // Calling createSuccessResponse() with no argument
   test('createSuccessResponse()', () => {
     const res = {
       status: jest.fn().mockReturnThis(),
@@ -35,14 +35,14 @@ describe('API Responses', () => {
 
     createSuccessResponse(res);
 
-    // Expect the response to look like the following
+    // To look like the following
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       status: 'ok',
     });
   });
 
-  // Write a test for calling createSuccessResponse() with an argument
+  // Calling createSuccessResponse() with an argument
   test('createSuccessResponse(data)', () => {
     const res = {
       status: jest.fn().mockReturnThis(),
@@ -52,7 +52,7 @@ describe('API Responses', () => {
 
     createSuccessResponse(res, data);
 
-    // Expect the response to look like the following
+    // To look like the following
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       status: 'ok',
