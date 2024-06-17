@@ -1,12 +1,13 @@
 // src/hash.js
 
 const crypto = require('crypto');
-const logger = require('./logger');
 
+/**
+ * @param {string} email - user's email address
+ * @returns {string} - hashed email address
+ */
 function hashEmail(email) {
-  const hashed = crypto.createHash('sha256').update(email).digest('hex');
-  logger.debug('Email hashed', { email, hashed });
-  return hashed;
+  return crypto.createHash('sha256').update(email).digest('hex');
 }
 
-module.exports = { hashEmail };
+module.exports = hashEmail;

@@ -1,6 +1,6 @@
 // tests/unit/hash.test.js
 
-const { hashEmail } = require('../../src/hash');
+const hashEmail = require('../../src/hash');
 
 describe('Hash Email', () => {
   test('should hash an email correctly', () => {

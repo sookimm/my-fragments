@@ -1,45 +1,90 @@
 // src/model/fragment.js
 
-const logger = require('../logger');
+const { randomUUID } = require('crypto');
+const contentType = require('content-type');
+const {
+  readFragment,
+  writeFragment,
+  readFragmentData,
+  writeFragmentData,
+  listFragments,
+  deleteFragment,
+} = require('./data');
 
 class Fragment {
-  constructor({ id, ownerId, data }) {
-    this.id = id;
+  constructor({ id, ownerId, created, updated, type, size = 0 }) {
+    if (!ownerId || !type) {
+      throw new Error('ownerId and type are required');
+    }
+
+    this.id = id || randomUUID();
     this.ownerId = ownerId;
-    this.data = data;
-    logger.info('Fragment instance created', { id, ownerId });
+    this.created = created || new Date().toISOString();
+    this.updated = updated || new Date().toISOString();
+    this.type = type;
+    this.size = size;
+
+    if (size < 0) {
+      throw new Error('size must be 0 or greater');
+    }
+
+    if (!Fragment.isSupportedType(type)) {
+      throw new Error(`unsupported type: ${type}`);
+    }
+  }
+
+  static async byUser(ownerId, expand = false) {
+    const fragments = await listFragments(ownerId, expand);
+    return fragments.map((f) => new Fragment(f));
+  }
+
+  static async byId(ownerId, id) {
+    const fragment = await readFragment(ownerId, id);
+    if (!fragment) {
+      throw new Error('fragment not found');
+    }
+    return new Fragment(fragment);
+  }
+
+  static delete(ownerId, id) {
+    return deleteFragment(ownerId, id);
   }
 
   async save() {
-    logger.debug('Saving fragment', { id: this.id, ownerId: this.ownerId });
-    fragments[`${this.ownerId}/${this.id}`] = this;
-    logger.info('Fragment saved', { id: this.id, ownerId: this.ownerId });
+    this.updated = new Date().toISOString();
+    await writeFragment(this.ownerId, this.id, this);
   }
 
-  static async read(id, ownerId) {
-    logger.debug('Reading fragment', { id, ownerId });
-    return fragments[`${ownerId}/${id}`] || null;
+  getData() {
+    return readFragmentData(this.ownerId, this.id);
   }
 
-  async getData() {
-    logger.debug('Getting fragment data', { id: this.id, ownerId: this.ownerId });
-    return this.data;
-  }
-
-  async setData(newData) {
-    logger.debug('Setting fragment data', { id: this.id, ownerId: this.ownerId });
-    this.data = newData;
+  async setData(data) {
+    if (!Buffer.isBuffer(data)) {
+      throw new Error('data must be a Buffer');
+    }
+    this.size = data.length;
+    await writeFragmentData(this.ownerId, this.id, data);
     await this.save();
   }
 
-  static isSupportedType(type) {
-    const supported = ['text/plain', 'application/json'].includes(type);
-    logger.debug('Checking if type is supported', { type, supported });
-    return supported;
+  get mimeType() {
+    const { type } = contentType.parse(this.type);
+    return type;
+  }
+
+  get isText() {
+    return this.mimeType.startsWith('text/');
+  }
+
+  get formats() {
+    return [this.type];
+  }
+
+  static isSupportedType(value) {
+    const { type } = contentType.parse(value);
+    return ['text/plain', 'application/json'].includes(type);
   }
 }
 
-// Temporary memory database
-const fragments = {};
-
-module.exports = Fragment;
+module.exports = { Fragment };
