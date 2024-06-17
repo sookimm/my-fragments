@@ -1,5 +1,4 @@
 // src/routes/index.js
-
 const express = require('express');
 const { createSuccessResponse } = require('../response');
 const logger = require('../logger');
@@ -12,7 +11,7 @@ logger.info('Setting up routes');
 router.use(`/v1`, authenticate(), require('./api'));
 
 // Simple health check route
-router.get('/', (req, res) => {
+router.get('/health', (req, res) => {
   // Client's shouldn't cache this response (always request it fresh)
   res.setHeader('Cache-Control', 'no-cache');
   // Send a 200 'OK' response
