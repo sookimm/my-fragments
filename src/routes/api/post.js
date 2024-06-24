@@ -27,11 +27,12 @@ const postFragment = async (req, res) => {
 
   try {
     const fragment = new Fragment({
-      id: 'generated-id',
       ownerId: req.user || 'test-user',
-      data: req.body,
+      type: req.headers['content-type'],
+      size: req.body.length,
     });
     await fragment.save();
+    await fragment.setData(req.body);
     const location = new URL(
       `/v1/fragments/${fragment.id}`,
       process.env.API_URL || `http://${req.headers.host}`
