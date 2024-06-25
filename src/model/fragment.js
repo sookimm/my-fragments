@@ -34,8 +34,14 @@ class Fragment {
   }
 
   static async byUser(ownerId, expand = false) {
-    const fragments = await listFragments(ownerId, expand);
-    return fragments.map((f) => new Fragment(f));
+    try {
+      const fragments = await listFragments(ownerId, expand);
+      console.log('Fragments retrieved:', fragments); // Add debugging log
+      return fragments.map((f) => new Fragment(f));
+    } catch (err) {
+      console.error('Error in byUser method:', err); // Add error log
+      throw new Error('Error fetching fragments by user');
+    }
   }
 
   static async byId(ownerId, id) {
