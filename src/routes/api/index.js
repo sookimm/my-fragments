@@ -9,6 +9,7 @@ const router = express.Router();
 
 // Define our routes
 router.get('/fragments', require('./get'));
+router.get('/fragments/:id', require('./getFragment')); // 새로운 라우트 추가
 router.post('/fragments', rawBody(), postFragment);
 
 logger.info('API routes set up');

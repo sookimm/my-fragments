@@ -45,11 +45,16 @@ class Fragment {
   }
 
   static async byId(ownerId, id) {
-    const fragment = await readFragment(ownerId, id);
-    if (!fragment) {
-      throw new Error('fragment not found');
+    try {
+      const fragment = await readFragment(ownerId, id);
+      if (!fragment) {
+        throw new Error('fragment not found');
+      }
+      return new Fragment(fragment);
+    } catch (err) {
+      console.error('Error in byId method:', err); // Add error log
+      throw new Error('Error fetching fragment by id');
     }
-    return new Fragment(fragment);
   }
 
   static delete(ownerId, id) {
