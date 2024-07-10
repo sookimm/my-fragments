@@ -36,7 +36,6 @@ class Fragment {
   static async byUser(ownerId, expand = false) {
     try {
       const fragments = await listFragments(ownerId, expand);
-      console.log('Fragments retrieved:', fragments); // Add debugging log
       return fragments.map((f) => new Fragment(f));
     } catch (err) {
       console.error('Error in byUser method:', err); // Add error log
