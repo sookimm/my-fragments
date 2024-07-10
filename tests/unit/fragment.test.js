@@ -8,6 +8,11 @@ const fragmentData = { id: 'fragment1', ownerId: 'owner1', type: 'text/plain', s
 jest.mock('../../src/model/data/memory', () => ({
   ...jest.requireActual('../../src/model/data/memory'),
   listFragments: jest.fn(),
+  writeFragment: jest.fn(),
+  readFragment: jest.fn(),
+  writeFragmentData: jest.fn(),
+  readFragmentData: jest.fn(),
+  deleteFragment: jest.fn(),
 }));
 
 describe('Fragment class', () => {
@@ -18,41 +23,71 @@ describe('Fragment class', () => {
 
   test('save() should store fragment', async () => {
     const fragment = new Fragment(fragmentData);
+    memoryDb.writeFragment.mockResolvedValueOnce();
     await fragment.save();
-    const storedFragment = await Fragment.byId(fragment.ownerId, fragment.id);
-    expect(storedFragment).toEqual(fragment);
+    expect(memoryDb.writeFragment).toHaveBeenCalledWith(
+      fragmentData.ownerId,
+      fragmentData.id,
+      expect.objectContaining({
+        id: fragmentData.id,
+        ownerId: fragmentData.ownerId,
+        type: fragmentData.type,
+        size: fragmentData.size,
+        created: expect.any(String),
+        updated: expect.any(String),
+      })
+    );
+  });
+
+  test('save() should throw an error if write fails', async () => {
+    const fragment = new Fragment(fragmentData);
+    memoryDb.writeFragment.mockRejectedValueOnce(new Error('Test error'));
+    await expect(fragment.save()).rejects.toThrow('Test error');
   });
 
   test('getData() should retrieve fragment data', async () => {
     const fragment = new Fragment(fragmentData);
-    await fragment.save();
-    await fragment.setData(Buffer.from('test data'));
+    memoryDb.readFragmentData.mockResolvedValueOnce(Buffer.from('test data'));
     const data = await fragment.getData();
     expect(data).toEqual(Buffer.from('test data'));
   });
 
+  test('getData() should throw an error if read fails', async () => {
+    const fragment = new Fragment(fragmentData);
+    memoryDb.readFragmentData.mockRejectedValueOnce(new Error('Test error'));
+    await expect(fragment.getData()).rejects.toThrow('Test error');
+  });
+
   test('setData() should update fragment data', async () => {
     const fragment = new Fragment(fragmentData);
-    await fragment.save();
     const newData = Buffer.from('new data');
+    memoryDb.writeFragmentData.mockResolvedValueOnce();
     await fragment.setData(newData);
-    const updatedData = await fragment.getData();
-    expect(updatedData).toEqual(newData);
+    expect(memoryDb.writeFragmentData).toHaveBeenCalledWith(
+      fragmentData.ownerId,
+      fragmentData.id,
+      newData
+    );
   });
 
   test('byId() should retrieve fragment by id', async () => {
     const fragment = new Fragment(fragmentData);
-    await fragment.save();
+    memoryDb.readFragment.mockResolvedValueOnce(fragmentData);
     const retrievedFragment = await Fragment.byId(fragment.ownerId, fragment.id);
     expect(retrievedFragment).toEqual(fragment);
   });
 
   test('delete() should delete fragment by id', async () => {
     const fragment = new Fragment(fragmentData);
-    await fragment.save();
+    memoryDb.deleteFragment.mockResolvedValueOnce();
     await Fragment.delete(fragment.ownerId, fragment.id);
-    const retrievedFragment = await memoryDb.readFragment(fragment.ownerId, fragment.id);
-    expect(retrievedFragment).toBeUndefined();
+    expect(memoryDb.deleteFragment).toHaveBeenCalledWith(fragment.ownerId, fragment.id);
+  });
+
+  test('delete() should throw an error if delete fails', async () => {
+    const fragment = new Fragment(fragmentData);
+    memoryDb.deleteFragment.mockRejectedValueOnce(new Error('Test error'));
+    await expect(Fragment.delete(fragment.ownerId, fragment.id)).rejects.toThrow('Test error');
   });
 
   test('byUser() should retrieve fragments by user', async () => {
@@ -82,12 +117,18 @@ describe('Fragment class', () => {
     expect(() => new Fragment({ ownerId: 'owner1' })).toThrow('ownerId and type are required');
   });
 
+  test('isSupportedType() should return true for supported type', () => {
+    const isSupported = Fragment.isSupportedType('text/plain');
+    expect(isSupported).toBe(true);
+  });
+
   test('isSupportedType() should return false for unsupported type', () => {
     const isSupported = Fragment.isSupportedType('image/png');
     expect(isSupported).toBe(false);
   });
 
   test('byId() should throw an error if fragment is not found', async () => {
+    memoryDb.readFragment.mockResolvedValueOnce(undefined);
     await expect(Fragment.byId('nonexistent-owner', 'nonexistent-id')).rejects.toThrow(
       'fragment not found'
     );
