@@ -15,4 +15,16 @@ describe('App', () => {
       },
     });
   });
+
+  test('should handle server errors gracefully', async () => {
+    const res = await request(app).get('/trigger-error');
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({
+      status: 'error',
+      error: {
+        message: 'Test Error',
+        code: 500,
+      },
+    });
+  });
 });

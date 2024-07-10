@@ -53,6 +53,13 @@ app.get('/', (req, res) => {
 
 app.use('/', require('./routes'));
 
+// Test route to trigger an error
+app.get('/trigger-error', (req, res, next) => {
+  const err = new Error('Test Error');
+  err.status = 500;
+  next(err);
+});
+
 // 404 middleware to handle any requests for resources that can't be found
 app.use((req, res) => {
   logger.warn('404 Not Found', { url: req.originalUrl });
@@ -65,7 +72,10 @@ app.use((req, res) => {
   });
 });
 
-app.use((err, req, res) => {
+// Error handling middleware
+/* eslint-disable no-unused-vars */
+app.use((err, req, res, next) => {
+  // <-- next added
   const status = err.status || 500;
   const message = err.message || 'unable to process request';
 
@@ -82,6 +92,7 @@ app.use((err, req, res) => {
     },
   });
 });
+/* eslint-enable no-unused-vars */
 
 // Export our `app` so we can access it in server.js
 module.exports = app;
