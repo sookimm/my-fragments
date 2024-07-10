@@ -45,6 +45,20 @@ class MemoryDB {
     }
     delete this.db[primaryKey][secondaryKey];
   }
+
+  async del(primaryKey, secondaryKey) {
+    if (typeof primaryKey !== 'string' || typeof secondaryKey !== 'string') {
+      throw new Error(
+        `primaryKey and secondaryKey strings are required, got primaryKey=${primaryKey}, secondaryKey=${secondaryKey}`
+      );
+    }
+    if (!this.db[primaryKey] || !this.db[primaryKey][secondaryKey]) {
+      throw new Error(
+        `missing entry for primaryKey=${primaryKey} and secondaryKey=${secondaryKey}`
+      );
+    }
+    delete this.db[primaryKey][secondaryKey];
+  }
 }
 
 module.exports = MemoryDB;
