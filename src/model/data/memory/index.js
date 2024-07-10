@@ -42,7 +42,7 @@ async function listFragments(ownerId, expand = false) {
     return fragments.map((fragment) => {
       console.log(
         `Fragment id: ${fragment.id}, ownerId: ${fragment.ownerId}, type: ${fragment.type}`
-      ); // 디버깅 로그 추가
+      );
       return {
         id: fragment.id,
         ownerId: fragment.ownerId,

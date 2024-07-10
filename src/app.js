@@ -50,6 +50,11 @@ app.get('/', (req, res) => {
   logger.info('Health check route accessed');
 });
 
+// Test route to trigger an error for testing purposes
+app.get('/trigger-error', (req, res) => {
+  throw new Error('Test error');
+});
+
 app.use('/', require('./routes'));
 
 // 404 middleware to handle any requests for resources that can't be found
@@ -64,7 +69,9 @@ app.use((req, res) => {
   });
 });
 
-app.use((err, req, res) => {
+// Error handling middleware
+app.use((err, req, res, next) => {
+  // Add 'next' parameter here
   const status = err.status || 500;
   const message = err.message || 'unable to process request';
 
