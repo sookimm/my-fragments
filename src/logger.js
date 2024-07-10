@@ -1,5 +1,7 @@
 // src/logger.js
 
+const pino = require('pino');
+
 const options = { level: process.env.LOG_LEVEL || 'info' };
 
 // If doing `debug` logging, make the logs easier to read
@@ -12,9 +14,6 @@ if (options.level === 'debug') {
   };
 }
 
-// For test environment, reduce log verbosity
-if (process.env.NODE_ENV === 'test') {
-  options.level = 'silent'; // Change this to 'error' or 'warn' if you still want some logs
-}
+const logger = pino(options);
 
-module.exports = require('pino')(options);
+module.exports = logger;
