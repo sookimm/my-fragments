@@ -5,6 +5,11 @@ const memoryDb = require('../../src/model/data/memory');
 
 const fragmentData = { id: 'fragment1', ownerId: 'owner1', type: 'text/plain', size: 0 };
 
+jest.mock('../../src/model/data/memory', () => ({
+  ...jest.requireActual('../../src/model/data/memory'),
+  listFragments: jest.fn(),
+}));
+
 describe('Fragment class', () => {
   test('should create a Fragment instance', () => {
     const fragment = new Fragment(fragmentData);
@@ -51,24 +56,45 @@ describe('Fragment class', () => {
   });
 
   test('byUser() should retrieve fragments by user', async () => {
-    const fragment1 = new Fragment(fragmentData);
-    const fragment2 = new Fragment({ ...fragmentData, id: 'fragment2' });
-    await fragment1.save();
-    await fragment2.save();
-    const fragments = await Fragment.byUser(fragment1.ownerId);
+    memoryDb.listFragments.mockResolvedValueOnce([
+      fragmentData,
+      { ...fragmentData, id: 'fragment2' },
+    ]);
+    const fragments = await Fragment.byUser(fragmentData.ownerId);
     expect(fragments).toEqual([
       expect.objectContaining({
-        id: fragment1.id,
-        ownerId: fragment1.ownerId,
-        type: fragment1.type,
-        size: fragment1.size,
+        id: fragmentData.id,
+        ownerId: fragmentData.ownerId,
+        type: fragmentData.type,
+        size: fragmentData.size,
       }),
       expect.objectContaining({
-        id: fragment2.id,
-        ownerId: fragment2.ownerId,
-        type: fragment2.type,
-        size: fragment2.size,
+        id: 'fragment2',
+        ownerId: fragmentData.ownerId,
+        type: fragmentData.type,
+        size: fragmentData.size,
       }),
     ]);
+  });
+
+  test('constructor should throw an error if ownerId or type is missing', () => {
+    expect(() => new Fragment({ type: 'text/plain' })).toThrow('ownerId and type are required');
+    expect(() => new Fragment({ ownerId: 'owner1' })).toThrow('ownerId and type are required');
+  });
+
+  test('isSupportedType() should return false for unsupported type', () => {
+    const isSupported = Fragment.isSupportedType('image/png');
+    expect(isSupported).toBe(false);
+  });
+
+  test('byId() should throw an error if fragment is not found', async () => {
+    await expect(Fragment.byId('nonexistent-owner', 'nonexistent-id')).rejects.toThrow(
+      'fragment not found'
+    );
+  });
+
+  test('byUser() should handle errors gracefully', async () => {
+    memoryDb.listFragments.mockRejectedValueOnce(new Error('Test error'));
+    await expect(Fragment.byUser('owner1')).rejects.toThrow('Error fetching fragments by user');
   });
 });

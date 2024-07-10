@@ -52,6 +52,9 @@ class Fragment {
       return new Fragment(fragment);
     } catch (err) {
       console.error('Error in byId method:', err); // Add error log
+      if (err.message === 'fragment not found') {
+        throw err;
+      }
       throw new Error('Error fetching fragment by id');
     }
   }
