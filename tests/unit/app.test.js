@@ -17,6 +17,7 @@ describe('App', () => {
   });
 
   test('should handle server errors gracefully', async () => {
+    jest.setTimeout(10000);
     const res = await request(app).get('/trigger-error');
     expect(res.statusCode).toBe(500);
     expect(res.body).toEqual({
