@@ -10,6 +10,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
       - '8080:8080'
+    volumes:
+      - ./tests/.htpasswd:/app/tests/.htpasswd
 
   dynamodb-local:
     image: amazon/dynamodb-local
