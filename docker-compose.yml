@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  fragments:
+    init: true
+    build: .
+    environment:
+      - API_URL=${API_URL}
+      - HTPASSWD_FILE=${HTPASSWD_FILE}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_S3_ENDPOINT_URL=${AWS_S3_ENDPOINT_URL}
+      - AWS_DYNAMODB_ENDPOINT_URL=${AWS_DYNAMODB_ENDPOINT_URL}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_DYNAMODB_TABLE_NAME=${AWS_DYNAMODB_TABLE_NAME}
+    ports:
+      - '8080:8080'
+
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    ports:
+      - '8000:8000'
+    command: ['-jar', 'DynamoDBLocal.jar', '-inMemory']
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=s3
