@@ -16,7 +16,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the application source code
-COPY ./src ./src
+COPY . .
 
 # Second stage: Create the runtime image
 FROM node:22.1.0
