@@ -5,14 +5,9 @@ services:
     init: true
     build: .
     environment:
-      - API_URL=${API_URL}
-      - HTPASSWD_FILE=${HTPASSWD_FILE}
-      - LOG_LEVEL=${LOG_LEVEL}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_S3_ENDPOINT_URL=${AWS_S3_ENDPOINT_URL}
-      - AWS_DYNAMODB_ENDPOINT_URL=${AWS_DYNAMODB_ENDPOINT_URL}
-      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
-      - AWS_DYNAMODB_TABLE_NAME=${AWS_DYNAMODB_TABLE_NAME}
+      - API_URL=http://localhost:8080
+      - HTPASSWD_FILE=tests/.htpasswd
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
       - '8080:8080'
 
