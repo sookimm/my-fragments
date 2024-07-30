@@ -10,6 +10,7 @@ const {
   listFragments,
   deleteFragment,
 } = require('./data');
+const logger = require('../logger');
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
@@ -38,7 +39,7 @@ class Fragment {
       const fragments = await listFragments(ownerId, expand);
       return fragments.map((f) => new Fragment(f));
     } catch (err) {
-      console.error('Error in byUser method:', err); // Add error log
+      logger.error('Error in byUser method', { err });
       throw new Error('Error fetching fragments by user');
     }
   }
@@ -51,7 +52,7 @@ class Fragment {
       }
       return new Fragment(fragment);
     } catch (err) {
-      console.error('Error in byId method:', err); // Add error log
+      logger.error('Error in byId method', { err });
       if (err.message === 'fragment not found') {
         throw err;
       }
@@ -59,12 +60,18 @@ class Fragment {
     }
   }
 
-  static delete(ownerId, id) {
-    return deleteFragment(ownerId, id);
+  static async delete(ownerId, id) {
+    try {
+      await deleteFragment(ownerId, id);
+    } catch (err) {
+      logger.error('Error deleting fragment', { err });
+      throw new Error('Error deleting fragment');
+    }
   }
 
   async save() {
     this.updated = new Date().toISOString();
+    logger.debug('Saving fragment metadata', { fragment: this });
     await writeFragment(this.ownerId, this.id, this);
   }
 
@@ -77,6 +84,7 @@ class Fragment {
       throw new Error('data must be a Buffer');
     }
     this.size = data.length;
+    logger.debug('Setting fragment data', { fragmentId: this.id, size: this.size });
     await writeFragmentData(this.ownerId, this.id, data);
     await this.save();
   }
