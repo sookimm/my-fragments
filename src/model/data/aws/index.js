@@ -26,6 +26,11 @@ async function writeFragmentData(ownerId, id, data) {
     Body: data,
   };
 
+  //console.log(process.env.AWS_S3_BUCKET_NAME);
+  //console.log(process.env.AWS_ACCESS_KEY_ID);
+  //console.log(process.env.AWS_SECRET_ACCESS_KEY);
+  //console.log(process.env.AWS_SECRET_ACCESS_KEY);
+
   const command = new PutObjectCommand(params);
 
   try {
