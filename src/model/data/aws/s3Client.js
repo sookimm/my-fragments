@@ -22,9 +22,17 @@ const getS3Endpoint = () => {
   }
 };
 
-module.exports = new S3Client({
+const s3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: getCredentials(),
   endpoint: getS3Endpoint(),
   forcePathStyle: true,
 });
+
+logger.info('S3 client configured', {
+  region: process.env.AWS_REGION,
+  endpoint: process.env.AWS_S3_ENDPOINT_URL,
+  credentials: !!getCredentials(),
+});
+
+module.exports = s3Client;

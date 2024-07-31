@@ -11,6 +11,7 @@ const router = express.Router();
 router.get('/fragments', require('./get'));
 router.get('/fragments/:id', require('./getFragment'));
 router.post('/fragments', rawBody(), postFragment);
+router.delete('/fragments/:id', require('./deleteFragment')); // DELETE route
 
 logger.info('API routes set up');
 

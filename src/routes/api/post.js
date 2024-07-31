@@ -26,13 +26,16 @@ const postFragment = async (req, res) => {
   }
 
   try {
+    logger.debug('Creating new fragment', { user: req.user, type: req.headers['content-type'] });
     const fragment = new Fragment({
       ownerId: req.user || 'test-user',
       type: req.headers['content-type'],
       size: req.body.length,
     });
     await fragment.save();
+    logger.debug('Fragment metadata saved', { fragment });
     await fragment.setData(req.body);
+    logger.debug('Fragment data saved', { fragmentId: fragment.id });
     const location = new URL(
       `/v1/fragments/${fragment.id}`,
       process.env.API_URL || `http://${req.headers.host}`
@@ -41,7 +44,7 @@ const postFragment = async (req, res) => {
     logger.info('Fragment created', { id: fragment.id, ownerId: fragment.ownerId });
     res.status(201).json({ fragment });
   } catch (err) {
-    logger.error('Unable to save fragment', { error: err.message });
+    logger.error('Unable to save fragment', { error: err.message, stack: err.stack }); // 에러 로그 추가
     res.status(500).json({ error: 'Unable to save fragment', details: err.message });
   }
 };
