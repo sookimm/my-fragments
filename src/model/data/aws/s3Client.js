@@ -13,6 +13,7 @@ const getCredentials = () => {
     logger.debug('Using extra S3 Credentials AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY');
     return credentials;
   }
+  logger.warn('AWS credentials are not set');
 };
 
 const getS3Endpoint = () => {
@@ -20,6 +21,7 @@ const getS3Endpoint = () => {
     logger.debug({ endpoint: process.env.AWS_S3_ENDPOINT_URL }, 'Using alternate S3 endpoint');
     return process.env.AWS_S3_ENDPOINT_URL;
   }
+  logger.warn('AWS S3 endpoint URL is not set');
 };
 
 const s3Client = new S3Client({
