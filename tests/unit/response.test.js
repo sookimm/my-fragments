@@ -1,60 +1,37 @@
-// tests/unit/response.test.js
-
 const { createErrorResponse, createSuccessResponse } = require('../../src/response');
 
-// The set of tests we're about to do
+// Define (i.e., name) the set of tests we're about to do
 describe('API Responses', () => {
-  // Test for calling createErrorResponse()
+  // Write a test for calling createErrorResponse()
   test('createErrorResponse()', () => {
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const status = 404;
-    const message = 'not found';
-
-    createErrorResponse(res, message, status);
-
-    // Expect the response to look like the following
-    expect(res.status).toHaveBeenCalledWith(status);
-    expect(res.json).toHaveBeenCalledWith({
+    const errorResponse = createErrorResponse(404, 'not found');
+    // Expect the result to look like the following
+    expect(errorResponse).toEqual({
       status: 'error',
       error: {
-        code: status,
-        message,
+        code: 404,
+        message: 'not found',
       },
     });
   });
 
-  // Calling createSuccessResponse() with no argument
+  // Write a test for calling createSuccessResponse() with no argument
   test('createSuccessResponse()', () => {
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-
-    createSuccessResponse(res);
-
-    // To look like the following
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
+    // No arg passed
+    const successResponse = createSuccessResponse();
+    // Expect the result to look like the following
+    expect(successResponse).toEqual({
       status: 'ok',
     });
   });
 
-  // Calling createSuccessResponse() with an argument
+  // Write a test for calling createSuccessResponse() with an argument
   test('createSuccessResponse(data)', () => {
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
+    // Data argument included
     const data = { a: 1, b: 2 };
-
-    createSuccessResponse(res, data);
-
-    // To look like the following
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
+    const successResponse = createSuccessResponse(data);
+    // Expect the result to look like the following
+    expect(successResponse).toEqual({
       status: 'ok',
       a: 1,
       b: 2,

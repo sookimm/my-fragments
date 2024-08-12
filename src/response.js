@@ -1,29 +1,18 @@
 // src/response.js
 
-const logger = require('./logger');
-
-// Function to create a success response
-const createSuccessResponse = (res, data = {}) => {
-  res.status(200).json({
+module.exports.createSuccessResponse = function (data) {
+  return {
     status: 'ok',
     ...data,
-  });
-  logger.info('Success response created', { data });
+  };
 };
 
-// Function to create an error response
-const createErrorResponse = (res, message, code = 500) => {
-  res.status(code).json({
+module.exports.createErrorResponse = function (code, message) {
+  return {
     status: 'error',
     error: {
-      message,
       code,
+      message,
     },
-  });
-  logger.error('Error response created', { message, code });
-};
-
-module.exports = {
-  createSuccessResponse,
-  createErrorResponse,
+  };
 };

@@ -1,91 +1,85 @@
-// src/model/data/aws/index.js
-
 const MemoryDB = require('../memory/memory-db');
+const logger = require('../../../logger');
 const s3Client = require('./s3Client');
 const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const logger = require('../../../logger');
 
-const data = new MemoryDB();
+// Create two in-memory databases: one for fragment metadata and the other for raw data
 const metadata = new MemoryDB();
 
 // Write a fragment's metadata to memory db. Returns a Promise
-function writeFragment(ownerId, id, fragment) {
-  logger.debug(`Writing fragment metadata for ownerId: ${ownerId}, id: ${id}`);
-  return metadata
-    .put(ownerId, id, fragment)
-    .then(() => {
-      logger.info(`Successfully wrote fragment metadata for ownerId: ${ownerId}, id: ${id}`);
-      return fragment;
-    })
-    .catch((err) => {
-      logger.error({ err, ownerId, id }, 'Error writing fragment metadata');
-      throw err;
-    });
+function writeFragment(fragment) {
+  return metadata.put(fragment.ownerId, fragment.id, fragment);
 }
 
 // Read a fragment's metadata from memory db. Returns a Promise
 function readFragment(ownerId, id) {
-  logger.debug(`Reading fragment metadata for ownerId: ${ownerId}, id: ${id}`);
-  return metadata
-    .get(ownerId, id)
-    .then((fragment) => {
-      logger.info(`Successfully read fragment metadata for ownerId: ${ownerId}, id: ${id}`);
-      return fragment;
-    })
-    .catch((err) => {
-      logger.error({ err, ownerId, id }, 'Error reading fragment metadata');
-      throw err;
-    });
+  return metadata.get(ownerId, id);
 }
 
-// Write a fragment's data buffer to S3. Returns a Promise
+// Write a fragment's data to memory db. Returns a Promise
+// Writes a fragment's data to an S3 Object in a Bucket
+// https://github.com/awsdocs/aws-sdk-for-javascript-v3/blob/main/doc_source/s3-example-creating-buckets.md#upload-an-existing-object-to-an-amazon-s3-bucket
 async function writeFragmentData(ownerId, id, data) {
+  // Create the PUT API params from our details
   const params = {
     Bucket: process.env.AWS_S3_BUCKET_NAME,
+    // Our key will be a mix of the ownerID and fragment id, written as a path
     Key: `${ownerId}/${id}`,
     Body: data,
   };
 
-  logger.debug(
-    `Writing fragment data to S3 for ownerId: ${ownerId}, id: ${id}, bucket: ${params.Bucket}`
-  );
-
+  // Create a PUT Object command to send to S3
   const command = new PutObjectCommand(params);
 
   try {
-    const response = await s3Client.send(command);
-    logger.info(`Successfully uploaded data to ${params.Bucket}/${params.Key}`, { response });
+    // Use our client to send the command
+    await s3Client.send(command);
   } catch (err) {
+    // If anything goes wrong, log enough info that we can debug
     const { Bucket, Key } = params;
-    logger.error({ err, Bucket, Key, stack: err.stack }, 'Error uploading fragment data to S3');
+    logger.error({ err, Bucket, Key }, 'Error uploading fragment data to S3');
     throw new Error('unable to upload fragment data');
   }
 }
 
-// Read a fragment's data from S3 and returns a Buffer. Returns a Promise
+// Convert a stream of data into a Buffer, by collecting
+// chunks of data until finished, then assembling them together.
+// We wrap the whole thing in a Promise so it's easier to consume.
 const streamToBuffer = (stream) =>
   new Promise((resolve, reject) => {
+    // As the data streams in, we'll collect it into an array.
     const chunks = [];
+
+    // Streams have events that we can listen for and run
+    // code.  We need to know when new `data` is available,
+    // if there's an `error`, and when we're at the `end`
+    // of the stream.
+
+    // When there's data, add the chunk to our chunks list
     stream.on('data', (chunk) => chunks.push(chunk));
+    // When there's an error, reject the Promise
     stream.on('error', reject);
+    // When the stream is done, resolve with a new Buffer of our chunks
     stream.on('end', () => resolve(Buffer.concat(chunks)));
   });
 
+// Reads a fragment's data from S3 and returns (Promise<Buffer>)
+// https://github.com/awsdocs/aws-sdk-for-javascript-v3/blob/main/doc_source/s3-example-creating-buckets.md#getting-a-file-from-an-amazon-s3-bucket
 async function readFragmentData(ownerId, id) {
+  // Create the PUT API params from our details
   const params = {
     Bucket: process.env.AWS_S3_BUCKET_NAME,
+    // Our key will be a mix of the ownerID and fragment id, written as a path
     Key: `${ownerId}/${id}`,
   };
 
-  logger.debug(
-    `Reading fragment data from S3 for ownerId: ${ownerId}, id: ${id}, bucket: ${params.Bucket}`
-  );
-
+  // Create a GET Object command to send to S3
   const command = new GetObjectCommand(params);
 
   try {
+    // Get the object from the Amazon S3 bucket. It is returned as a ReadableStream.
     const data = await s3Client.send(command);
-    logger.info(`Successfully streamed data from ${params.Bucket}/${params.Key}`);
+    // Convert the ReadableStream to a Buffer
     return streamToBuffer(data.Body);
   } catch (err) {
     const { Bucket, Key } = params;
@@ -96,72 +90,38 @@ async function readFragmentData(ownerId, id) {
 
 // Get a list of fragment ids/objects for the given user from memory db. Returns a Promise
 async function listFragments(ownerId, expand = false) {
-  logger.debug(`Listing fragments for ownerId: ${ownerId}, expand: ${expand}`);
-  try {
-    const fragments = await metadata.query(ownerId);
+  const fragments = await metadata.query(ownerId);
 
-    if (expand || !fragments) {
-      logger.info(`Successfully listed expanded fragments for ownerId: ${ownerId}`);
-      return fragments;
-    }
-
-    logger.info(`Successfully listed fragment ids for ownerId: ${ownerId}`);
-    return fragments.map((fragment) => ({
-      id: fragment.id,
-      ownerId: fragment.ownerId,
-      type: fragment.type,
-    }));
-  } catch (err) {
-    logger.error({ err, ownerId }, 'Error listing fragments');
-    throw new Error('Error listing fragments');
+  // If we don't get anything back, or are supposed to give expanded fragments, return
+  if (expand || !fragments) {
+    return fragments;
   }
+
+  // Otherwise, map to only send back the ids
+  return fragments.map((fragment) => fragment.id);
 }
 
-// Delete a fragment's metadata and data from S3 and memory db. Returns a Promise
+// Delete a fragment's metadata and data from memory db. Returns a Promise
 async function deleteFragment(ownerId, id) {
   const params = {
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     Key: `${ownerId}/${id}`,
   };
 
-  logger.debug(
-    `Deleting fragment data from S3 for ownerId: ${ownerId}, id: ${id}, bucket: ${params.Bucket}`
-  );
-
   const command = new DeleteObjectCommand(params);
 
   try {
     await s3Client.send(command);
-    logger.info(`Successfully deleted data from ${params.Bucket}/${params.Key}`);
   } catch (err) {
     const { Bucket, Key } = params;
-    logger.error({ err, Bucket, Key }, 'Error deleting fragment data from S3');
+    logger.error({ err, Bucket, Key }, 'Error deleting fragment data to S3');
     throw new Error('unable to delete fragment data');
   }
-
-  return Promise.all([
-    metadata
-      .del(ownerId, id)
-      .then(() => logger.info(`Successfully deleted metadata for ownerId: ${ownerId}, id: ${id}`))
-      .catch((err) => {
-        logger.error({ err, ownerId, id }, 'Error deleting fragment metadata');
-        throw err;
-      }),
-    data
-      .del(ownerId, id)
-      .then(() => logger.info(`Successfully deleted data for ownerId: ${ownerId}, id: ${id}`))
-      .catch((err) => {
-        logger.error({ err, ownerId, id }, 'Error deleting fragment data');
-        throw err;
-      }),
-  ]);
 }
 
-module.exports = {
-  listFragments,
-  writeFragment,
-  readFragment,
-  writeFragmentData,
-  readFragmentData,
-  deleteFragment,
-};
+module.exports.listFragments = listFragments;
+module.exports.writeFragment = writeFragment;
+module.exports.readFragment = readFragment;
+module.exports.writeFragmentData = writeFragmentData;
+module.exports.readFragmentData = readFragmentData;
+module.exports.deleteFragment = deleteFragment;

@@ -1,18 +1,28 @@
 // src/routes/api/index.js
 
 const express = require('express');
-const { rawBody, postFragment } = require('./post');
-const logger = require('../../logger');
+const { Fragment } = require('../../model/fragment');
+const contentType = require('content-type');
 
-// Create a router on which to mount our API endpoints
+// Router to mount API endpoints
 const router = express.Router();
 
-// Define our routes
-router.get('/fragments', require('./get'));
-router.get('/fragments/:id', require('./getFragment'));
-router.post('/fragments', rawBody(), postFragment);
-router.delete('/fragments/:id', require('./deleteFragment')); // DELETE route
+const rawBody = () =>
+  express.raw({
+    inflate: true,
+    limit: '5mb',
+    type: (req) => {
+      const { type } = contentType.parse(req);
+      return Fragment.isSupportedType(type);
+    },
+  });
 
-logger.info('API routes set up');
+// Define the routes
+router.get('/fragments', require('./get'));
+router.post('/fragments', rawBody(), require('./post'));
+router.get('/fragments/:id', require('./getById'));
+router.get('/fragments/:id/info', require('./getByIdInfo'));
+router.delete('/fragments/:id', require('./delete'));
+router.put('/fragments/:id', rawBody(), require('./put'));
 
 module.exports = router;

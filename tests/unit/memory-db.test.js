@@ -1,102 +1,90 @@
-// tests/unit/memory-db.test.js
-
-const memoryDb = require('../../src/model/data/memory');
+// Fix this path to point to your project's `memory-db.js` source file
 const MemoryDB = require('../../src/model/data/memory/memory-db');
 
-// Test data
-const ownerId = 'testOwner';
-const fragment = { id: 'testId', ownerId, size: 100, type: 'text/plain' };
-const data = Buffer.from('Hello, world!');
-
-describe('Memory Database', () => {
+describe('memory-db', () => {
   let db;
 
+  // Each test will get its own, empty database instance
   beforeEach(() => {
     db = new MemoryDB();
   });
 
-  test('writeFragment() should store fragment', async () => {
-    const result = await memoryDb.writeFragment(ownerId, fragment.id, fragment);
-    expect(result).toEqual(fragment);
+  test('put() returns nothing', async () => {
+    const result = await db.put('a', 'b', {});
+    expect(result).toBe(undefined);
   });
 
-  test('readFragment() should retrieve stored fragment', async () => {
-    await memoryDb.writeFragment(ownerId, fragment.id, fragment);
-    const result = await memoryDb.readFragment(ownerId, fragment.id);
-    expect(result).toEqual(fragment);
-  });
-
-  test('readFragmentData() should retrieve fragment data', async () => {
-    await memoryDb.writeFragment(ownerId, fragment.id, fragment);
-    await memoryDb.writeFragmentData(ownerId, fragment.id, data);
-    const result = await memoryDb.readFragmentData(ownerId, fragment.id);
+  test('get() returns what we put() into the db', async () => {
+    const data = { value: 123 };
+    await db.put('a', 'b', data);
+    const result = await db.get('a', 'b');
     expect(result).toEqual(data);
   });
 
-  test('writeFragmentData() should update fragment data', async () => {
-    await memoryDb.writeFragment(ownerId, fragment.id, fragment);
-    const newData = Buffer.from('new data');
-    await memoryDb.writeFragmentData(ownerId, fragment.id, newData);
-    const result = await memoryDb.readFragmentData(ownerId, fragment.id);
-    expect(result).toEqual(newData);
+  test('put() and get() work with Buffers', async () => {
+    const data = Buffer.from([1, 2, 3]);
+    await db.put('a', 'b', data);
+    const result = await db.get('a', 'b');
+    expect(result).toEqual(data);
   });
 
-  test('put() should store entry correctly', async () => {
-    await db.put('primaryKey', 'secondaryKey', { value: 'test' });
-    const result = await db.get('primaryKey', 'secondaryKey');
-    expect(result).toEqual({ value: 'test' });
+  test('get() with incorrect secondaryKey returns nothing', async () => {
+    await db.put('a', 'b', 123);
+    const result = await db.get('a', 'c');
+    expect(result).toBe(undefined);
   });
 
-  test('get() should throw error if primaryKey or secondaryKey is not a string', async () => {
-    await expect(db.get(123, 'secondaryKey')).rejects.toThrow(
-      'primaryKey and secondaryKey strings are required, got primaryKey=123, secondaryKey=secondaryKey'
-    );
-    await expect(db.get('primaryKey', 123)).rejects.toThrow(
-      'primaryKey and secondaryKey strings are required, got primaryKey=primaryKey, secondaryKey=123'
-    );
+  test('query() returns all secondaryKey values', async () => {
+    await db.put('a', 'a', { value: 1 });
+    await db.put('a', 'b', { value: 2 });
+    await db.put('a', 'c', { value: 3 });
+
+    const results = await db.query('a');
+    expect(Array.isArray(results)).toBe(true);
+    expect(results).toEqual([{ value: 1 }, { value: 2 }, { value: 3 }]);
   });
 
-  test('put() should throw error if primaryKey or secondaryKey is not a string', async () => {
-    await expect(db.put(123, 'secondaryKey', {})).rejects.toThrow(
-      'primaryKey and secondaryKey strings are required, got primaryKey=123, secondaryKey=secondaryKey'
-    );
-    await expect(db.put('primaryKey', 123, {})).rejects.toThrow(
-      'primaryKey and secondaryKey strings are required, got primaryKey=primaryKey, secondaryKey=123'
-    );
+  test('query() returns empty array', async () => {
+    await db.put('b', 'a', { value: 1 });
+    await db.put('b', 'b', { value: 2 });
+    await db.put('b', 'c', { value: 3 });
+
+    const results = await db.query('a');
+    expect(Array.isArray(results)).toBe(true);
+    expect(results).toEqual([]);
   });
 
-  test('query() should return all entries for a primary key', async () => {
-    await db.put('primaryKey', 'secondaryKey1', { value: 'test1' });
-    await db.put('primaryKey', 'secondaryKey2', { value: 'test2' });
-    const result = await db.query('primaryKey');
-    expect(result).toEqual([{ value: 'test1' }, { value: 'test2' }]);
+  test('del() removes value put() into db', async () => {
+    await db.put('a', 'a', { value: 1 });
+    expect(await db.get('a', 'a')).toEqual({ value: 1 });
+    await db.del('a', 'a');
+    expect(await db.get('a', 'a')).toBe(undefined);
   });
 
-  test('query() should throw error if primaryKey is not a string', async () => {
-    await expect(db.query(123)).rejects.toThrow(
-      'primaryKey string is required, got primaryKey=123'
-    );
+  test('del() throws if primaryKey and secondaryKey not in db', () => {
+    expect(() => db.del('a', 'a')).rejects.toThrow();
   });
 
-  test('del() should delete entry correctly', async () => {
-    await db.put('primaryKey', 'secondaryKey', { value: 'test' });
-    await db.del('primaryKey', 'secondaryKey');
-    const result = await db.get('primaryKey', 'secondaryKey');
-    expect(result).toBeUndefined();
+  test('get() expects string keys', () => {
+    expect(async () => await db.get()).rejects.toThrow();
+    expect(async () => await db.get(1)).rejects.toThrow();
+    expect(async () => await db.get(1, 1)).rejects.toThrow();
   });
 
-  test('del() should throw error if primaryKey or secondaryKey is not a string', async () => {
-    await expect(db.del(123, 'secondaryKey')).rejects.toThrow(
-      'primaryKey and secondaryKey strings are required, got primaryKey=123, secondaryKey=secondaryKey'
-    );
-    await expect(db.del('primaryKey', 123)).rejects.toThrow(
-      'primaryKey and secondaryKey strings are required, got primaryKey=primaryKey, secondaryKey=123'
-    );
+  test('put() expects string keys', () => {
+    expect(async () => await db.put()).rejects.toThrow();
+    expect(async () => await db.put(1)).rejects.toThrow();
+    expect(async () => await db.put(1, 1)).rejects.toThrow();
   });
 
-  test('del() should throw error if entry does not exist', async () => {
-    await expect(db.del('primaryKey', 'nonexistent')).rejects.toThrow(
-      'missing entry for primaryKey=primaryKey and secondaryKey=nonexistent'
-    );
+  test('query() expects string key', () => {
+    expect(async () => await db.query()).rejects.toThrow();
+    expect(async () => await db.query(1)).rejects.toThrow();
+  });
+
+  test('del() expects string keys', () => {
+    expect(async () => await db.del()).rejects.toThrow();
+    expect(async () => await db.del(1)).rejects.toThrow();
+    expect(async () => await db.del(1, 1)).rejects.toThrow();
   });
 });

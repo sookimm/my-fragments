@@ -1,55 +1,29 @@
 // src/routes/api/post.js
 
-const express = require('express');
-const contentType = require('content-type');
+const { createSuccessResponse, createErrorResponse } = require('../../response');
 const { Fragment } = require('../../model/fragment');
-const logger = require('../../logger');
+const hash = require('../../hash');
 
-// rawBody middleware
-const rawBody = () =>
-  express.raw({
-    inflate: true,
-    limit: '5mb',
-    type: (req) => {
-      const { type } = contentType.parse(req);
-      const supported = Fragment.isSupportedType(type);
-      logger.debug('Parsing request content type', { type, supported });
-      return supported;
-    },
-  });
+const apiURL = process.env.API_URL;
 
-// postFragment route handler
-const postFragment = async (req, res) => {
-  if (!Buffer.isBuffer(req.body)) {
-    logger.warn('Invalid content type');
-    return res.status(400).json({ error: 'Invalid content type' });
+module.exports = async (req, res) => {
+  if (Fragment.isSupportedType(req.get('Content-Type'))) {
+    try {
+      const type = req.get('Content-Type');
+      const fragment = new Fragment({ ownerId: hash(req.user), type: type });
+      await fragment.setData(req.body);
+      res.setHeader('Content-type', fragment.type);
+      res.setHeader('Location', apiURL + '/v1/fragments/' + fragment.id);
+      res.status(201).json(
+        createSuccessResponse({
+          status: 'ok',
+          fragment: fragment,
+        })
+      );
+    } catch (error) {
+      res.status(401).json(createErrorResponse(401, error));
+    }
+  } else {
+    res.status(415).json(createErrorResponse(415, 'Unsupported Type'));
   }
-
-  try {
-    logger.debug('Creating new fragment', { user: req.user, type: req.headers['content-type'] });
-    const fragment = new Fragment({
-      ownerId: req.user || 'test-user',
-      type: req.headers['content-type'],
-      size: req.body.length,
-    });
-    await fragment.save();
-    logger.debug('Fragment metadata saved', { fragment });
-    await fragment.setData(req.body);
-    logger.debug('Fragment data saved', { fragmentId: fragment.id });
-    const location = new URL(
-      `/v1/fragments/${fragment.id}`,
-      process.env.API_URL || `http://${req.headers.host}`
-    );
-    res.setHeader('Location', location.toString());
-    logger.info('Fragment created', { id: fragment.id, ownerId: fragment.ownerId });
-    res.status(201).json({ fragment });
-  } catch (err) {
-    logger.error('Unable to save fragment', { error: err.message, stack: err.stack }); // 에러 로그 추가
-    res.status(500).json({ error: 'Unable to save fragment', details: err.message });
-  }
-};
-
-module.exports = {
-  rawBody,
-  postFragment,
 };

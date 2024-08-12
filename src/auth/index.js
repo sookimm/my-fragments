@@ -1,7 +1,6 @@
 // src/auth/index.js
 
 const logger = require('../logger');
-
 const hasCognitoConfig = process.env.AWS_COGNITO_POOL_ID && process.env.AWS_COGNITO_CLIENT_ID;
 const hasBasicAuthConfig = process.env.HTPASSWD_FILE && process.env.NODE_ENV !== 'production';
 

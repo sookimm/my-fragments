@@ -1,56 +1,74 @@
-// tests/unit/post.test.js
-
 const request = require('supertest');
-const app = require('../../src/app');
-const { Fragment } = require('../../src/model/fragment');
 
-jest.mock('../../src/model/fragment', () => {
-  const originalModule = jest.requireActual('../../src/model/fragment');
-  return {
-    __esModule: true,
-    ...originalModule,
-    Fragment: jest.fn().mockImplementation(() => ({
-      id: 'generated-id',
-      save: jest.fn().mockImplementation(() => {
-        console.log('Mock save called');
-      }),
-      setData: jest.fn(),
-      getData: jest.fn(),
-    })),
-  };
-});
+const app = require('../../src/app');
 
 describe('POST /v1/fragments', () => {
-  beforeEach(() => {
-    Fragment.mockClear();
-    Fragment.isSupportedType = jest.fn().mockReturnValue(true); // isSupportedType method mocking
-  });
-
-  test('should create a plain text fragment', async () => {
+  // unauthenticated requests
+  test('unauthenticated requests', async () => {
+    const data = Buffer.from('This is fragment');
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user1@email.com', 'password1') // Add authentication info
       .set('Content-Type', 'text/plain')
-      .send('plain text data');
-
-    console.log('Response:', res.body); // Add response log
-
-    expect(res.statusCode).toBe(201);
-    expect(res.headers.location).toMatch(/\/v1\/fragments\/generated-id$/);
-    expect(res.body.fragment).toBeDefined();
+      .send(data);
+    expect(res.statusCode).toBe(401);
   });
 
-  test('should return 400 for unsupported content type', async () => {
-    Fragment.isSupportedType.mockReturnValue(false); // Set to unsupported content type
+  // If the wrong username/password pair are used (no such user), it should be forbidden
+  test('incorrect credentials are denied', () =>
+    request(app).post('/v1/fragments').auth('invalid@email.com', 'incorrect_password').expect(401));
 
+  // Trying to create a fragment with an unsupported type errors as expected
+  test('Incorrect types', async () => {
+    const data = Buffer.from('This is fragment');
     const res = await request(app)
       .post('/v1/fragments')
-      .auth('user1@email.com', 'password1') // Add authentication info
-      .set('Content-Type', 'application/octet-stream')
-      .send(Buffer.from('binary data'));
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'abd/dasda')
+      .send(data);
+    expect(res.statusCode).toBe(415);
+  });
 
-    console.log('Response:', res.body); // Add response log
+  test('authenticated users create a plain text fragment', async () => {
+    const data = Buffer.from('This is fragment');
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'text/plain')
+      .send(data);
+    expect(res.statusCode).toBe(201);
+    expect(res.text.includes('text/plain'));
+  });
 
-    expect(res.statusCode).toBe(400);
+  test('authenticated users create a markdown text fragment', async () => {
+    const data = Buffer.from('# This is fragment');
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'text/markdown')
+      .send(data);
+    expect(res.statusCode).toBe(201);
+    expect(res.text.includes('text/markdown'));
+  });
+
+  test('authenticated users create a html text fragment', async () => {
+    const data = Buffer.from('<h1> This is fragment </h1>');
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'text/html')
+      .send(data);
+    expect(res.statusCode).toBe(201);
+    expect(res.text.includes('text/html'));
+  });
+
+  test('authenticated users create a json fragment', async () => {
+    const data = Buffer.from("{'name': 'Terry'}");
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'application/json')
+      .send(data);
+    expect(res.statusCode).toBe(201);
+    expect(res.text.includes('application/json'));
   });
 });
