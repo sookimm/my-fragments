@@ -8,9 +8,6 @@ const { S3Client } = require('@aws-sdk/client-s3');
 const logger = require('../../../logger');
 
 /**
- * If AWS credentials are configured in the environment, use them. Normally when we connect to S3
- * from a deployment in AWS, we won't bother with this.  But if you're testing locally, you'll need
- * these, or if you're connecting to LocalStack or MinIO
  * @returns Object | undefined
  */
 const getCredentials = () => {
@@ -29,7 +26,10 @@ const getCredentials = () => {
 };
 
 /**
+<<<<<<< HEAD
  * If an AWS S3 Endpoint is configured in the environment, use it.
+=======
+>>>>>>> 1b9b53848ace22d7fcb1058df2246661ffe3f12c
  * @returns string | undefined
  */
 const getS3Endpoint = () => {

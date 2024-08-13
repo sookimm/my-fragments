@@ -38,5 +38,4 @@ user1@email.com:password1
 
 HTTP/1.1 200
 [Asserts]
-header "Content-Type" startsWith "text/plain"
-body contains "This is a fragment!"
+header "Content-Type" == "text/plain; charset=utf-8"

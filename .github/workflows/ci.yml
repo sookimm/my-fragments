@@ -68,19 +68,14 @@ jobs:
           node-version: '16'
           cache: 'npm'
 
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+      - name: Load environment variables
+        run: cp env.jest .env
 
       - name: Install node dependencies
         run: npm install
 
       - name: Build Containers
         run: docker-compose up -d
-
-      - name: Make scripts file executable
-        run: chmod +x ./scripts/local-aws-setup.sh
 
       - name: Setup Local AWS Resources
         run: ./scripts/local-aws-setup.sh
