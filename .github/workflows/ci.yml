@@ -61,16 +61,25 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+
       - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: '16'
           cache: 'npm'
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
       - name: Install node dependencies
         run: npm install
+
       - name: Build Containers
         run: docker-compose up -d
-      - name: make scripts file executable
+
+      - name: Make scripts file executable
         run: chmod +x ./scripts/local-aws-setup.sh
 
       - name: Setup Local AWS Resources
