@@ -6,6 +6,8 @@ FROM node:22.1.0 AS build
 LABEL maintainer="Sooyeon Kim <skim499@myseneca.ca>"
 LABEL description="Fragments node.js microservice"
 
+ENV NODE_ENV=production
+
 # Use /app as our working directory
 WORKDIR /app
 
