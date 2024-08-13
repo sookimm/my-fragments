@@ -63,6 +63,7 @@ jobs:
           environment-variables: |
             LOG_LEVEL=debug
             NODE_ENV=production
+            AWS_S3_BUCKET_NAME=skim499-fragments
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
