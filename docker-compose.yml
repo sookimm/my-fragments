@@ -10,7 +10,7 @@ services:
       - ./tests/.htpasswd:/app/tests/.htpasswd
     environment:
       - API_URL=http://localhost:8080
-      - HTPASSWD_FILE=/app/tests/.htpasswd
+      - HTPASSWD_FILE=tests/.htpasswd
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - AWS_REGION=us-east-1
       - AWS_S3_ENDPOINT_URL=http://localstack:4566
