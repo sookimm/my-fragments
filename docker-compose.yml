@@ -17,8 +17,6 @@ services:
       - AWS_DYNAMODB_ENDPOINT_URL=http://localstack:4566
       - AWS_S3_BUCKET_NAME=fragments
       - AWS_DYNAMODB_TABLE_NAME=fragments
-      - AWS_COGNITO_POOL_ID=us-east-1_6yzJfIpJw
-      - AWS_COGNITO_CLIENT_ID=63fjeahq4u2a1vrsrdthd1r29
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_SESSION_TOKEN=test
